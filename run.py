@@ -1,14 +1,41 @@
 import pandas as pd
 
 def load_data(filename='data.csv'):
-    return pd.read_csv(filename)
+    try:
+        df = pd.read_csv(filename)
+        print(f'Successfuly loaded data {len(df)}')
+        return df
+    except FileNotFoundError:
+        print("Sales data not found")
+
+def analyse_variability(df):
+    print('Variability & Shape Skewness')
+
+    std_dev = df['Total_Sales'].std()
+    print(f"Standard Deviation: {std_dev:.2f}")
+
+    skew = df['Total_Sales'].skew()
+    print(f"Skewness Score: {skew:.2f}")
+
+    if -0.5< skew < 0.5:
+        print("Fairly symmetrical")
+    elif skew >= 0.5:
+        print("Positively Skewed")
+    else :
+        print("Negatively Skewed")
 
 def show_report(df):
     print("===== SALES REPORT =====")
 
     outliers = detect_outliers(df)
+    analyse_variability(df)
 
-    print("Outliers:", outliers)
+    if not outliers.empty:
+        print(f"Alert! Found {len(outliers)} outlier(s)") 
+        for i, row in outliers.iterrows():
+            print(f"Day : {row['Day']} | Sales: {row['Total_Sales']:.2f}")
+    else:
+        print("No outliers deteceted")
 
 
 def detect_outliers(df):
