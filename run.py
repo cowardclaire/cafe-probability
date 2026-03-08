@@ -113,6 +113,23 @@ def run_ab_test_simulation():
     else:
         print("Result is not statistically significant. We fail to reject the null hypothesis.")
 
+    #Economic Impact Calculation
+    #cost to print new menus
+
+    ad_cost_per_day = 20.0
+
+    daily_gain = mean_b - mean_a
+    net_result = daily_gain - ad_cost_per_day
+    print(f"Daily Gain from New Menu: £{daily_gain:.2f}")
+    print(f"Net Result after Ad Cost: £{net_result:.2f}")
+
+    if significance_check and net_result > 0:
+        print("Recommendation: Implement the new menu promotion!")  
+    elif significance_check and net_result <= 0:
+        print("Recommendation: New menu is effective but not cost efficient. Consider other promotional strategies.")
+    else:
+        print("Recommendation: Do not implement the new menu promotion.")
+
 def main():
     data = load_data()
 
