@@ -64,71 +64,72 @@ def calculate_sample_size(variance, mde):
 
     return math.ceil(n_required) #rounds up to the nearest whole number(you cannot have half a person)
 
-def run_ab_test_simulation():   
-
-
-#Calculate sample size, generate random data, perform t-test, and calculate financial impact here
-
+def print_simulation_header():
     print("\n" + "="*40)
     print("Running A/B Test Simulation...")
     print("Scenario: New Menu in Cafe Promotion")
     print("\n" + "="*40)
 
-    #Group A (current menu)
-    avg_daily_sales = 220.0
-    std_dev_a = 30.0 #how much sales typically fluctuate day to day with the current menu
-    variance = std_dev_a  ** 2
-    # Minimum Detectable Effect - how much we want the new menu to improve sales by
-    mde = 25.0
-    # Sample size calculation
-    n_days = calculate_sample_size(variance, mde)
+def get_simulation_parameters():
+    return {
+        'avg_daily_sales': 220.0,
+        'std_dev_a': 30.0,
+        'mde': 25.0,
+        'std_dev_b': 40.0,
+        'actual_uplift': 35.0,
+        'ad_cost_per_day': 20.0
+    }
 
-    print(n_days,"<========","Sample Size Required for A/B Test")  
+def generate_group_data(avg_sales, std_dev, n_days):
+    return np.random.normal(loc=avg_sales, scale=std_dev, size=n_days)
 
-    # Group A: This is the control group with the current menu
-    # We're generate random sales data for a number of days based on the average daily sales and standard deviation
-
-    group_a = np.random.normal(loc=avg_daily_sales, scale=std_dev_a, size=n_days)
-
-    std_dev_b = 40.0
-    actual_uplift = 35.0 #This is the actual improvement due to the new menu
-
-    group_b = np.random.normal(loc=avg_daily_sales+actual_uplift, scale=std_dev_b, size=n_days)
-
-    mean_a = np.mean(group_a) # average sales of current menu
-    mean_b = np.mean(group_b) # average sales of new menu
-
-    print(f"Group A (Current Menu) - Mean Sales: £{mean_a:.2f}")
-    print(f"Group B (New Menu) - Mean Sales: £{mean_b:.2f}") 
-    print(f"Actual Uplift: £{mean_b - mean_a:.2f}") 
-
+def perform_t_test(group_a, group_b):
     t_statistic, p_value = stats.ttest_ind(group_a, group_b)
+    significant = p_value < 0.05
+    return t_statistic, p_value, significant
+
+def calculate_economic_impact(mean_a, mean_b, ad_cost):
+    daily_gain = mean_b - mean_a
+    net_result = daily_gain - ad_cost
+    return daily_gain, net_result
+
+def print_results(n_days, mean_a, mean_b, uplift, p_value, significant, daily_gain, net_result):
+    print(f"{n_days} <======== Sample Size Required for A/B Test")
+    print(f"Group A (Current Menu) - Mean Sales: £{mean_a:.2f}")
+    print(f"Group B (New Menu) - Mean Sales: £{mean_b:.2f}")
+    print(f"Actual Uplift: £{uplift:.2f}")
     print(f"P-value: {p_value:.5f}")
-
-    significance_check = False
-
-    if p_value < 0.05:
+    if significant:
         print("Result is statistically significant! We can reject the null hypothesis.")
-        significance_check = True
     else:
         print("Result is not statistically significant. We fail to reject the null hypothesis.")
-
-    #Economic Impact Calculation
-    #cost to print new menus
-
-    ad_cost_per_day = 20.0
-
-    daily_gain = mean_b - mean_a
-    net_result = daily_gain - ad_cost_per_day
     print(f"Daily Gain from New Menu: £{daily_gain:.2f}")
     print(f"Net Result after Ad Cost: £{net_result:.2f}")
-
-    if significance_check and net_result > 0:
-        print("Recommendation: Implement the new menu promotion!")  
-    elif significance_check and net_result <= 0:
+    if significant and net_result > 0:
+        print("Recommendation: Implement the new menu promotion!")
+    elif significant and net_result <= 0:
         print("Recommendation: New menu is effective but not cost efficient. Consider other promotional strategies.")
     else:
         print("Recommendation: Do not implement the new menu promotion.")
+
+def run_ab_test_simulation():
+    print_simulation_header()
+
+    params = get_simulation_parameters()
+    variance = params['std_dev_a'] ** 2
+    n_days = calculate_sample_size(variance, params['mde'])
+
+    group_a = generate_group_data(params['avg_daily_sales'], params['std_dev_a'], n_days)
+    group_b = generate_group_data(params['avg_daily_sales'] + params['actual_uplift'], params['std_dev_b'], n_days)
+
+    mean_a = np.mean(group_a)
+    mean_b = np.mean(group_b)
+    uplift = mean_b - mean_a
+
+    t_statistic, p_value, significant = perform_t_test(group_a, group_b)
+    daily_gain, net_result = calculate_economic_impact(mean_a, mean_b, params['ad_cost_per_day'])
+
+    print_results(n_days, mean_a, mean_b, uplift, p_value, significant, daily_gain, net_result)
 
 def main():
     data = load_data()
